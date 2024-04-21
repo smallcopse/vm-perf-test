@@ -27,3 +27,14 @@
     state: present
     regexp: '^OnCalendar=.*'
     line: "OnCalendar={{ sysstat_timer }}"
+
+- name: load sch_netem module
+  become: true
+  command: modprobe sch_netem
+
+- name: put perf scripts
+  template:
+    src: "{{ item }}.j2"
+    dest: "{{ perf_script_dir }}/{{ item }}"
+    mode: "0755"
+  loop: "{{ perf_sciprts }}"

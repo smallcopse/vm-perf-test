@@ -13,6 +13,7 @@
 *.conf          text eol=lf
 *.sh            text eol=lf
 *.rb            text eol=lf
+*.j2            text eol=lf
 *.php           text eol=lf
 *.repo          text eol=lf
 docker-php-*    text eol=lf

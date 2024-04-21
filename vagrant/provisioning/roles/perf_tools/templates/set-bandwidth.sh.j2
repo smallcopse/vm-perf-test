@@ -1,0 +1,39 @@
+#!/bin/bash
+
+# get CONFIG_HZ (Default: 1000)
+CONFIG_HZ=$(cat /boot/config-$(uname -r) | grep -Po '(?<=CONFIG_HZ=).*')
+
+# get params
+_rate_mbps=""
+_if_name=""
+while getopts ":hi:r:" OPT
+do
+  case $OPT in
+    i) _if_name=$OPTARG;;
+    r) _rate_mbps=$OPTARG;;
+    h) echo  "Help";;
+    :) echo  "[ERROR] Option argument is undefined.";;   # 
+    \?) echo "[ERROR] Undefined options.";;
+  esac
+done
+
+if [ -z "${_if_name}" ]; then
+  echo "please specify interface name like '-i IF_NAME'."
+  exit 1
+elif [ -z "${_rate_mbps}" ]; then
+  echo "please specify bandwidth (rate) like '-r MBPS'."
+  exit 1
+fi
+
+echo "interface: ${_if_name}"
+echo "rate: ${_rate_mbps} mbps"
+
+# calc burst = rate/CONFIG_HZ (unit: byte)
+_burst_byte=$(expr ${_rate_mbps} '*' 1000000 / 8 / ${CONFIG_HZ})
+echo "burst: ${_burst_byte} bytes"
+
+# calc limit = burst x 10
+_limit_byte=$(expr ${_burst_byte} '*' 10)
+echo "limit: ${_limit_byte} bytes"
+
+tc qdisc add dev ${_if_name} root handle 1:0 tbf rate ${_rate_mbps}mbit burst ${_burst_byte}b limit ${_limit_byte}b

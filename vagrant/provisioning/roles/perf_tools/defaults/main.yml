@@ -1,5 +1,6 @@
 ---
 perf_tools:
+  - kernel-modules-extra
   - stress-ng
   - iproute-tc
   - iperf3
@@ -7,3 +8,12 @@ perf_tools:
 
 # record stats every minutes
 sysstat_timer: '*:00/1'
+
+iperf3_logfile: /var/tmp/iperf3.log
+iperf3_pidfile: /var/tmp/iperf3.pid
+
+perf_script_dir: /opt
+perf_sciprts:
+  - iperf3-server.sh
+  - set-bandwidth.sh
+  - reset-tc-config.sh
