@@ -4,6 +4,7 @@ perf_tools:
   - stress-ng
   - iproute-tc
   - iperf3
+  - hping3
   - sysstat
 
 # record stats every minutes
