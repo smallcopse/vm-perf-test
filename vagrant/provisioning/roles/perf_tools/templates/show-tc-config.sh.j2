@@ -5,4 +5,4 @@ if [ "$# -ne 1 ]; then
   exit 1
 fi
 
-sudo tc qdisc del dev $1 root
+sudo tc qdisc show dev $1

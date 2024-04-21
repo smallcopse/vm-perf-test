@@ -16,4 +16,7 @@ perf_script_dir: /opt
 perf_sciprts:
   - iperf3-server.sh
   - set-bandwidth.sh
+  - set-packet-error.sh
+  - set-packet-loss.sh
   - reset-tc-config.sh
+  - show-tc-config.sh

@@ -18,7 +18,7 @@ do
 done
 
 if [ -z "${_if_name}" ]; then
-  echo "please specify interface name like '-i IF_NAME'."
+  echo "please specify interface name like '-i eth0'."
   exit 1
 elif [ -z "${_rate_mbps}" ]; then
   echo "please specify bandwidth (rate) like '-r MBPS'."
@@ -36,4 +36,8 @@ echo "burst: ${_burst_byte} bytes"
 _limit_byte=$(expr ${_burst_byte} '*' 10)
 echo "limit: ${_limit_byte} bytes"
 
+# set bandwidth
 tc qdisc add dev ${_if_name} root handle 1:0 tbf rate ${_rate_mbps}mbit burst ${_burst_byte}b limit ${_limit_byte}b
+
+# show interface info
+tc qdisc show dev ${_if_name}

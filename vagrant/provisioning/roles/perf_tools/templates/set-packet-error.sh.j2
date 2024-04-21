@@ -1,0 +1,29 @@
+#!/bin/bash
+
+# get params
+_packet_corrupt_percentage=""
+_if_name=""
+while getopts ":hi:p:" OPT
+do
+  case $OPT in
+    i) _if_name=$OPTARG;;
+    p) _packet_corrupt_percentage=$OPTARG;;
+    h) echo  "Help";;
+    :) echo  "[ERROR] Option argument is undefined.";;   # 
+    \?) echo "[ERROR] Undefined options.";;
+  esac
+done
+
+if [ -z "${_if_name}" ]; then
+  echo "please specify interface name like '-i eth0'."
+  exit 1
+elif [ -z "${_packet_corrupt_percentage}" ]; then
+  echo "please specify loss percentage like '-p 50'."
+  exit 1
+fi
+
+# set packet corrupt percentage
+tc qdisc add dev ${_if_name} root netem corrupt ${_packet_corrupt_percentage}%
+
+# show interface info
+tc qdisc show dev ${_if_name}
