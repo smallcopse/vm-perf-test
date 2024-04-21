@@ -1,0 +1,12 @@
+---
+- name: yum update
+  include: yum.yml
+  when:
+    - ansible_os_family == "RedHat"
+    - ansible_distribution_major_version < "8"
+    
+- name: dnf update
+  include: dnf.yml
+  when:
+    - ansible_os_family == "RedHat"
+    - ansible_distribution_major_version == "8"

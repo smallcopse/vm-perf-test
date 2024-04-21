@@ -1,0 +1,10 @@
+---
+- hosts: all
+  become: yes
+  roles:
+      # update_packages
+    - role: update_packages
+      tags: update_packages
+      # intall perf tools
+    - role: perf_tools
+      tags: perf_tools

@@ -1,0 +1,74 @@
+---
+- name: install python dependencies
+  # become: false
+  pip: 
+    name:
+      - pexpect
+    state: latest
+    virtualenv: "{{ kolla_venv }}"
+    virtualenv_command: /usr/bin/env python3 -m venv
+  
+- name: Read device information (always use unit when probing)
+  become: true
+  parted:
+    device: /dev/sda
+    unit: GiB
+  register: sda_info
+
+- name: debug sda_info
+  debug:
+    var: sda_info
+
+# - name: Create a new partition
+#   become: true
+#   parted:
+#     device: /dev/sda
+#     number: 2
+#     part_start: "{{ sda_info.partitions[0].end }}GiB"
+#     state: present
+#   tags: always
+
+# - name: mkfs sda2
+#   become: true
+#   filesystem:
+#     fstype: xfs
+#     dev: /dev/sda2
+#     # resizefs: yes
+
+# - name: Create a new partition
+#   become: true
+#   parted:
+#     device: /dev/sda
+#     number: 1
+#     part_end: "{{ sda_info.partitions[0].end }}GiB"
+#     state: present
+
+- name: extend /dev/sda1 partition
+#   become: true
+  expect:
+    command: "sudo parted /dev/sda resizepart 1 100%"
+    responses:
+      "Yes/No": "Yes"
+      "End*": "100%"
+  vars:
+    ansible_python_interpreter: "{{ kolla_venv }}/bin/python"
+  when: sda_info.partitions[0].end != sda_info.disk.size
+
+# - name: extend /dev/sda1
+# #   become: true
+#     shell: "source {{ kolla_venv }}/bin/activate && sudo parted /dev/sda resizepart 1 100%"
+#     responses:
+#             "Yes/No": "Yes"
+#             "End*": "100%"
+
+# - name: extend sda1
+#   become: true
+#   filesystem:
+#     fstype: xfs
+#     dev: /dev/sda1
+#     resizefs: yes
+
+- name: extend /dev/sda1 partition
+  become: yes
+  command: xfs_growfs /
+  when: sda_info.partitions[0].end != sda_info.disk.size

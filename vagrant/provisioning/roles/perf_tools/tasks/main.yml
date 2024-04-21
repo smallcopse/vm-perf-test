@@ -1,0 +1,11 @@
+---
+- name: dnf update
+  include_tasks: dnf.yml
+  when:
+    - ansible_os_family == "RedHat"
+    - ansible_distribution_major_version == "8"
+
+- name: apt update
+  include_tasks: apt.yml
+  when:
+    - ansible_os_family == "Debian"

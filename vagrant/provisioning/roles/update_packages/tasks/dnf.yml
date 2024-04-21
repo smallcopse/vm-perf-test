@@ -1,0 +1,28 @@
+---
+- name: dnf -y update
+  become: true
+  dnf:
+    name: '*'
+    state: latest
+    exclude: docker-ce
+  async: 1000
+  poll: 0
+  register: dnf_update_async
+
+- name: 'wait dnf -y update task'
+  become: true
+  async_status:
+    jid: "{{ dnf_update_async.ansible_job_id }}"
+  register: dnf_update_poll
+  until: dnf_update_poll.finished
+  retries: 60
+  delay: 10
+
+# - name: pip install -U pip
+#   # become: false
+#   pip: 
+#     name: pip
+#     state: latest
+#     # executable: pip3
+#     virtualenv: "{{ kolla_venv }}"
+#     virtualenv_command: /usr/bin/env python3 -m venv

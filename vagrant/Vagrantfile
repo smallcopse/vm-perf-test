@@ -1,0 +1,71 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+
+require 'yaml'
+require './utils/network.rb'
+# require './utils/plugin.rb'
+require './utils/node.rb'
+
+VAGRANTFILE_API_VERSION = '2'
+VAGRANTFILE_DIR = File.dirname(__FILE__)
+ANSIBLE_INVENTORY_PATH = 'provisioning/inventories/rocky8/hosts.yml'
+VIRTUALBOX_INTNET = 'kollanet'
+PRIVATE_KEY_PATH = '~/.vagrant.d/insecure_private_key'
+
+# ------------------------
+# install required plugins
+# ------------------------
+required_plugins = %w( vagrant-vbguest vagrant-disksize vagrant-hostmanager )
+_retry = false
+required_plugins.each do |plugin|
+  unless Vagrant.has_plugin? plugin
+    system "vagrant plugin install #{plugin}"
+    _retry=true
+  end
+end
+
+if (_retry)
+  exec "vagrant " + ARGV.join(' ')
+end
+
+# ---------------------------
+# load inventory file (hosts)
+# ---------------------------
+begin
+  conf = YAML.load_file(File.join(VAGRANTFILE_DIR, ANSIBLE_INVENTORY_PATH))
+rescue Errno::ENOENT => ex
+  STDERR.puts <<-EOT
+    File does not exist. '#{ANSIBLE_INVENTORY_PATH}'
+  EOT
+  exit;
+end
+
+# ---------------------------
+# Vagrant
+# ---------------------------
+Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
+
+  # Use the same key for each node
+  config.ssh.insert_key = false
+  config.hostmanager.enabled = true
+  # config.ssh.private_key_path = ["~/.vagrant.d/insecure_private_key"]
+  # config.ssh.insert_key = true
+  # config.vbguest.auto_update = false
+
+  conf['all']['hosts'].each do |host, hostvars|
+    config.vm.define host do |node|
+      # setup node
+      setup_node(node, hostvars)
+
+      # synced_folder
+      hostvars.fetch('synced_folder', []).each do |folder|
+        node.vm.synced_folder File.join(VAGRANTFILE_DIR, folder['host']), folder['guest']
+      end
+
+      # reboot VM if reboot_after_provision=true
+      if hostvars.fetch('reboot_after_provision', false) then
+        node.vm.provision 'shell', reboot: true
+      end
+    end
+  end
+end

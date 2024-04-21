@@ -1,0 +1,9 @@
+---
+perf_tools:
+  - stress-ng
+  - iproute-tc
+  - iperf3
+  - sysstat
+
+# record stats every minutes
+sysstat_timer: '*:00/1'

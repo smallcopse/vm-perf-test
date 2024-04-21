@@ -1,0 +1,21 @@
+*               text=auto
+*.gitignore     text eol=lf
+*.gitattributes text eol=lf
+*.repo          text eol=lf
+*.ps1           text eol=crlf
+*.bat           text eol=crlf
+*.jpg           -text
+*.png           -text
+*.yml           text eol=lf
+*.yaml          text eol=lf
+*.md            text eol=lf
+*.cfg           text eol=lf
+*.conf          text eol=lf
+*.sh            text eol=lf
+*.rb            text eol=lf
+*.php           text eol=lf
+*.repo          text eol=lf
+docker-php-*    text eol=lf
+Makefile        text eol=lf
+Containerfile   text eol=lf
+Vagrantfile     text eol=lf

@@ -1,0 +1,29 @@
+---
+- name: install epel-release
+  become: true
+  dnf:
+    name: 'epel-release'
+
+- name: install perf tools
+  become: true
+  dnf:
+    name: "{{ perf_tools }}"
+  async: 1000
+  poll: 0
+  register: install_perf_tools_async
+
+- name: 'wait dnf -y update task'
+  become: true
+  async_status:
+    jid: "{{ install_perf_tools_async.ansible_job_id }}"
+  register: install_perf_tools_poll
+  until: install_perf_tools_poll.finished
+  retries: 50
+  delay: 10
+
+- name: set sysstat timer
+  lineinfile:
+    dest: '/usr/lib/systemd/system/sysstat-collect.timer'
+    state: present
+    regexp: '^OnCalendar=.*'
+    line: "OnCalendar={{ sysstat_timer }}"
