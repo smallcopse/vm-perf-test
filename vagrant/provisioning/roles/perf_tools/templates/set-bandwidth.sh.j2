@@ -1,35 +1,46 @@
 #!/bin/bash
 
-# get CONFIG_HZ (Default: 1000)
-CONFIG_HZ=$(cat /boot/config-$(uname -r) | grep -Po '(?<=CONFIG_HZ=).*')
+source $(dirname $0)/common.sh
+
+function usage() {
+  echo "Usage: $0 -i IF_NAME -r MBPS"
+  echo "  IFNAME: interface name like 'eth0'."
+  echo "  MBPS: bandwidth (Mbps). ex: '50' -> 50 Mbps"
+}
 
 # get params
-_rate_mbps=""
-_if_name=""
+rate_mbps=""
+net_if=""
 while getopts ":hi:r:" OPT
 do
   case $OPT in
-    i) _if_name=$OPTARG;;
-    r) _rate_mbps=$OPTARG;;
-    h) echo  "Help";;
-    :) echo  "[ERROR] Option argument is undefined.";;   # 
+    i) net_if=$OPTARG;;
+    r) rate_mbps=$OPTARG;;
+    h) usage && exit 0;;
+    :) echo  "[ERROR] Option argument is undefined.";;
     \?) echo "[ERROR] Undefined options.";;
   esac
 done
 
-if [ -z "${_if_name}" ]; then
-  echo "please specify interface name like '-i eth0'."
+validate_net_if "${net_if}"
+
+if [ -z "${rate_mbps}" ]; then
+  echo "please specify bandwidth (Mbps) like '-r 50'."
   exit 1
-elif [ -z "${_rate_mbps}" ]; then
-  echo "please specify bandwidth (rate) like '-r MBPS'."
+elif ! (is_number "${rate_mbps}"); then
+  echo "specified bandwidth value '${rate_mbps}' is not valid number."
   exit 1
 fi
 
-echo "interface: ${_if_name}"
-echo "rate: ${_rate_mbps} mbps"
+echo "interface: ${net_if}"
+echo "rate: ${rate_mbps} mbps"
+
+# get CONFIG_HZ (Default: 1000)
+CONFIG_HZ=$(cat /boot/config-$(uname -r) | grep -Po '(?<=CONFIG_HZ=).*')
+
 
 # calc burst = rate/CONFIG_HZ (unit: byte)
-_burst_byte=$(expr ${_rate_mbps} '*' 1000000 / 8 / ${CONFIG_HZ})
+_burst_byte=$(expr ${rate_mbps} '*' 1000000 / 8 / ${CONFIG_HZ})
 echo "burst: ${_burst_byte} bytes"
 
 # calc limit = burst x 10
@@ -37,7 +48,11 @@ _limit_byte=$(expr ${_burst_byte} '*' 10)
 echo "limit: ${_limit_byte} bytes"
 
 # set bandwidth
-tc qdisc add dev ${_if_name} root handle 1:0 tbf rate ${_rate_mbps}mbit burst ${_burst_byte}b limit ${_limit_byte}b
+tc qdisc add dev ${net_if} root handle 1:0 htb default 10
+tc class add dev ${net_if} parent 1:0 classid 1:10 htb rate ${rate_mbps}mbit
+
+# this is rate limit command using tbf
+# tc qdisc add dev ${net_if} root handle 1:0 tbf rate ${rate_mbps}mbit burst ${_burst_byte}b limit ${_limit_byte}b
 
 # show interface info
-tc qdisc show dev ${_if_name}
+tc qdisc show dev ${net_if}

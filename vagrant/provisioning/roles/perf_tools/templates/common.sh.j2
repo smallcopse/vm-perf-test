@@ -1,0 +1,55 @@
+#!/bin/bash
+
+function list_net_if() {
+  ip -br l | awk '$1 !~ "lo|vir|wl" { print $1}'
+}
+
+function exists_net_if() {
+  local _target=$1
+  for _net_if in $(list_net_if); do
+    if [ "$_target" == "$_net_if" ]; then
+      return 0
+    fi
+  done
+  return 1
+}
+
+function validate_net_if() {
+  local _net_if=$1
+  if [ -z "${_net_if}" ]; then
+    echo "please specify interface name like '-i eth0'."
+    exit 1
+  elif ! (exists_net_if "${_net_if}"); then
+    echo "specified interface '${_net_if}' not found."
+    exit 1
+  fi
+}
+
+function is_number() {
+  [[ "$1" =~ ^[0-9]+$ ]] || return 1
+  return 0
+}
+
+function is_percentage() {
+  local _number="$1"
+
+  # if param is not a number, return 1
+  is_number "${_number}" || return 1
+
+  # if 0 <= ${_number} <= 100, return 0
+  if [ "$_number" -ge 0 ] && [ "$_number" -le 100 ]; then
+    return 0
+  else
+    return 1
+  fi
+}
+
+function show_tc_config() {
+  local _net_if=$1
+  tc qdisc show dev ${_net_if}
+}
+
+function reset_tc_config() {
+  local _net_if=$1
+  tc qdisc del dev ${_net_if} root
+}

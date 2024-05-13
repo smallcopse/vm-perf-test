@@ -1,29 +1,39 @@
 #!/bin/bash
 
+source $(dirname $0)/common.sh
+
+function usage() {
+  echo "Usage: $0 -i IF_NAME -p PERCENTAGE"
+  echo "  IFNAME: interface name like 'eth0'."
+  echo "  PERCENTAGE: loss percentage (0-100)."
+}
+
 # get params
-_packet_loss_percentage=""
-_if_name=""
+packet_loss_percentage=""
+net_if=""
 while getopts ":hi:p:" OPT
 do
   case $OPT in
-    i) _if_name=$OPTARG;;
-    p) _packet_loss_percentage=$OPTARG;;
-    h) echo  "Help";;
-    :) echo  "[ERROR] Option argument is undefined.";;   # 
+    i) net_if=$OPTARG;;
+    p) packet_loss_percentage=$OPTARG;;
+    h) usage && exit 0;;
+    :) echo  "[ERROR] Option argument is undefined.";;
     \?) echo "[ERROR] Undefined options.";;
   esac
 done
 
-if [ -z "${_if_name}" ]; then
-  echo "please specify interface name like '-i eth0'."
-  exit 1
-elif [ -z "${_packet_loss_percentage}" ]; then
+validate_net_if "${net_if}"
+
+if [ -z "${packet_loss_percentage}" ]; then
   echo "please specify loss percentage like '-p 50'."
+  exit 1
+elif ! (is_percentage "${packet_loss_percentage}"); then
+  echo "specified loss percentage value '${packet_loss_percentage}' is not in [0, 100]."
   exit 1
 fi
 
 # set packet loss percentage
-tc qdisc add dev ${_if_name} root netem drop ${_packet_loss_percentage}%
+tc qdisc add dev ${net_if} root netem loss ${packet_loss_percentage}%
 
 # show interface info
-tc qdisc show dev ${_if_name}
+tc qdisc show dev ${net_if}

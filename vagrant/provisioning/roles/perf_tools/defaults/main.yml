@@ -15,6 +15,7 @@ iperf3_pidfile: /var/tmp/iperf3.pid
 
 perf_script_dir: /opt
 perf_sciprts:
+  - common.sh
   - iperf3-server.sh
   - set-bandwidth.sh
   - set-packet-error.sh

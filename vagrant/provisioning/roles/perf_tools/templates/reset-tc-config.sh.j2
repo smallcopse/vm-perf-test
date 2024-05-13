@@ -1,8 +1,27 @@
 #!/bin/bash
 
-if [ "$# -ne 1 ]; then
-  echo "please specify interface name like 'eth0'."
-  exit 1
-fi
+source $(dirname $0)/common.sh
 
-sudo tc qdisc del dev $1 root
+function usage() {
+  echo "Usage: $0 [IF_NAME]"
+  echo "  IFNAME: interface name like 'eth0'."
+  echo "  if IFNAME is not specfied, reset tc config of all interfaces."
+}
+
+# main
+
+if [ "$#" -eq 1 ]; then
+  net_if=$1
+  if exists_net_if "${net_if}"; then
+    reset_tc_config "${net_if}"
+  else
+    echo "network interface '${net_if}' not found."
+  fi
+elif [ "$#" -eq 0 ]; then
+  for net_if in $(list_net_if); do
+    echo "reset ${net_if}"
+    reset_tc_config ${net_if}
+  done
+else
+  usage
+fi
